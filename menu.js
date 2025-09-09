@@ -118,31 +118,32 @@ function renderCartItems(){
 }
 
 async function placeOrderHandler(){
-  if (!CART.items.length) return alert('Tu pedido está vacío.');
+  if(CART.items.length===0) return alert('Tu pedido está vacío');
   const note = document.getElementById('note').value || '';
   const payload = {
     fn: 'placeOrder',
     mesa_id: CART.mesa || '0',
     items: CART.items,
     total: CART.items.reduce((s,i)=>s+i.qty*i.price,0),
-    note: note
+    note
   };
-  try{
-    const res = await fetch(API, {
+  try {
+    const res = await fetch(API_BASE, {
       method:'POST',
       headers:{ 'Content-Type':'application/json' },
       body: JSON.stringify(payload)
     });
     const data = await res.json();
-    if (data && data.success) {
-      alert('Pedido enviado. ID: ' + data.order_id);
+    if(data && data.success){
+      alert(`Pedido enviado correctamente! ID: ${data.order_id}`);
       CART.items = [];
       updateCartUI();
       closeCart();
     } else {
-      alert('Error al enviar pedido');
+      console.error(data);
+      alert('Error al enviar pedido: ' + (data.error||'desconocido'));
     }
-  }catch(err){
+  } catch(err){
     console.error(err);
     alert('Error de conexión al enviar pedido');
   }
@@ -150,3 +151,4 @@ async function placeOrderHandler(){
 
 /* helper */
 function escapeHtml(text){ return String(text).replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];}); }
+
