@@ -1,21 +1,104 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Menú - Restaurante</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Restaurante Profesional</title>
 
-<!-- Estilos propios -->
+<!-- CSS propio -->
 <link rel="stylesheet" href="assets/css/styles.css">
 
 <!-- Google Material Chips -->
 <link rel="stylesheet" href="https://unpkg.com/@material/chips/dist/mdc.chips.css">
 <script src="https://unpkg.com/@material/chips/dist/mdc.chips.min.js" defer></script>
 
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+  /* ===== Estilos básicos ===== */
+  body {
+    margin:0;
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(120deg, #f6d365, #fda085);
+    color: #333;
+  }
+
+  .site-header {
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+    padding: 15px 30px;
+    background: rgba(255,255,255,0.95);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    position: sticky;
+    top:0;
+    z-index: 100;
+  }
+  .site-header .brand { font-size: 1.8em; font-weight:700; color:#d84315; }
+  .header-right { display:flex; gap:10px; align-items:center; }
+  .mesa-badge { font-weight:500; background:#ffe0b2; padding:5px 10px; border-radius:12px; }
+
+  .btn {
+    cursor:pointer;
+    border:none;
+    padding:8px 15px;
+    border-radius:8px;
+    font-weight:500;
+    transition: all 0.3s ease;
+  }
+  .btn.primary { background:#d84315; color:white; }
+  .btn.primary:hover { background:#bf360c; box-shadow:0 0 8px rgba(0,0,0,0.3); }
+  .btn.small { font-size:0.9em; padding:5px 10px; }
+  
+  main.container { padding:20px; display:flex; justify-content:center; flex-wrap:wrap; gap:20px; }
+
+  .menu-area { display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:20px; width:100%; max-width:1200px; }
+
+  .card {
+    perspective: 1000px;
+  }
+  .card-inner {
+    background:white;
+    border-radius:15px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.3);
+    transform-style: preserve-3d;
+    transition: transform 0.5s;
+    padding:15px;
+    display:flex;
+    flex-direction:column;
+    height:100%;
+  }
+  .card:hover .card-inner { transform: rotateY(10deg) rotateX(5deg) scale(1.05); }
+
+  .imgwrap img { width:100%; border-radius:12px; margin-bottom:10px; }
+
+  .title { font-weight:700; font-size:1.1em; margin-bottom:5px; }
+  .desc { font-size:0.9em; margin-bottom:10px; color:#555; }
+
+  .footer { margin-top:auto; display:flex; justify-content:space-between; align-items:center; }
+
+  .qty-controls { display:flex; align-items:center; gap:5px; }
+  .qty-controls .count { width:25px; text-align:center; display:inline-block; }
+  .qty-controls button { width:30px; height:30px; background:#ffe0b2; border-radius:6px; font-weight:700; }
+  .qty-controls button:hover { background:#ffb74d; }
+
+  /* Modal carrito */
+  .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:200; }
+  .modal.show { display:flex; }
+  .modal-content {
+    background:white; border-radius:12px; padding:20px; width:90%; max-width:500px;
+  }
+  .cart-footer { margin-top:10px; display:flex; flex-direction:column; gap:10px; }
+  input#note { width:100%; padding:6px; border-radius:8px; border:1px solid #ccc; }
+  .total { font-weight:700; font-size:1.2em; text-align:right; }
+</style>
+
 </head>
 <body>
+
 <header class="site-header">
-  <div class="brand">Restaurante</div>
+  <div class="brand">Restaurante Profesional</div>
   <div class="header-right">
     <div id="mesaBadge" class="mesa-badge">Mesa: --</div>
     <button id="openCartBtn" class="btn small">Ver Pedido <span id="cartCount">0</span></button>
@@ -23,18 +106,16 @@
 </header>
 
 <main class="container">
-  <section id="menuArea" class="menu-area">
-    <!-- Menú cargado por JS -->
-  </section>
+  <section id="menuArea" class="menu-area"></section>
 </main>
 
 <!-- Carrito modal -->
-<div id="cartModal" class="modal hidden">
+<div id="cartModal" class="modal">
   <div class="modal-content">
     <h3>Tu Pedido</h3>
     <div id="cartItems"></div>
     <div class="cart-footer">
-      <input id="note" placeholder="Observaciones (p.ej. sin cebolla)" />
+      <input id="note" placeholder="Observaciones (p.ej. sin cebolla)">
       <div class="total">Total: $<span id="cartTotal">0.00</span></div>
       <button id="placeOrderBtn" class="btn primary">Hacer pedido</button>
       <button id="closeCartBtn" class="btn">Cerrar</button>
@@ -43,102 +124,124 @@
 </div>
 
 <script>
-  const API_BASE = 'https://script.google.com/macros/s/AKfycbykvqW5j1KO5WP9VwJITtvjwWx_k1Iu60mtRcmHdqokRepM1mih22LFY9E1a4sO03zD/exec'; 
-  const SITE_BASE = 'https://techmant.github.io/restaurant/';
-</script>
+const API_BASE = 'https://script.google.com/macros/s/AKfycbykvqW5j1KO5WP9VwJITtvjwWx_k1Iu60mtRcmHdqokRepM1mih22LFY9E1a4sO03zD/exec';
 
+let CART = { items: [], mesa:null };
 
+function getMesaFromURL() {
+  const url = new URL(window.location.href);
+  const mesa = url.searchParams.get('mesa') || url.pathname.split('/').pop() || '0';
+  return mesa;
+}
 
-  <script>
-(async function testAPI(){
+function updateMesaBadge() {
+  const mesa = CART.mesa = getMesaFromURL();
+  document.getElementById('mesaBadge').innerText = mesa && mesa!=='0' ? `Mesa: ${mesa}` : 'Mesa: --';
+}
+
+async function fetchMenu() {
   try {
-    const res = await fetch('https://script.google.com/macros/s/AKfycbykvqW5j1KO5WP9VwJITtvjwWx_k1Iu60mtRcmHdqokRepM1mih22LFY9E1a4sO03zD/exec?fn=getMenu');
+    const res = await fetch(`${API_BASE}?fn=getMenu`);
     const data = await res.json();
-    console.log('Datos recibidos del menú:', data);
-    // prueba visual mínima
-    const area = document.getElementById('menuArea');
     if(data && data.menu && data.menu.length){
-      area.innerHTML = data.menu.map(i=>`<div>${i.name} - $${i.price}</div>`).join('');
+      renderMenu(data.menu);
     } else {
-      area.innerHTML = '<p>No hay items disponibles.</p>';
+      document.getElementById('menuArea').innerHTML = '<p>No hay items disponibles.</p>';
     }
-  } catch(err){
-    console.error('Error al conectar con API:', err);
-    document.getElementById('menuArea').innerHTML = '<p>Error al conectar con API</p>';
-  }
-})();
-</script>
-
-  <section id="menuArea" class="menu-area">
-  <!-- Menú cargado por JS -->
-</section>
-
-<script>
-(async function renderFullMenu(){
-  const area = document.getElementById('menuArea');
-  try {
-    const res = await fetch('https://script.google.com/macros/s/AKfycbykvqW5j1KO5WP9VwJITtvjwWx_k1Iu60mtRcmHdqokRepM1mih22LFY9E1a4sO03zD/exec?fn=getMenu');
-    const data = await res.json();
-
-    if(data && data.menu && data.menu.length){
-      area.innerHTML = '';
-      data.menu.forEach(item=>{
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.style.border = '1px solid #ccc';
-        card.style.margin = '10px';
-        card.style.padding = '10px';
-        card.style.width = '250px';
-        card.style.display = 'inline-block';
-        card.style.verticalAlign = 'top';
-        card.innerHTML = `
-          <div class="imgwrap">
-            <img src="${item.image_url || 'https://via.placeholder.com/250x150?text=Sin+imagen'}" 
-                 alt="${item.name}" 
-                 style="width:100%; height:auto; display:block; margin-bottom:8px;">
-          </div>
-          <div class="title" style="font-weight:bold; margin-bottom:4px;">${item.name} - $${item.price}</div>
-          <div class="desc" style="margin-bottom:8px;">${item.description || ''}</div>
-          <div class="footer">
-            <div class="qty-controls" style="margin-bottom:4px;">
-              <button class="btn dec">-</button>
-              <span class="count">0</span>
-              <button class="btn inc">+</button>
-            </div>
-            <button class="btn primary add">Añadir</button>
-          </div>
-        `;
-
-        // cantidad
-        const countEl = card.querySelector('.count');
-        card.querySelector('.inc').addEventListener('click', ()=> countEl.innerText = Number(countEl.innerText)+1 );
-        card.querySelector('.dec').addEventListener('click', ()=> countEl.innerText = Math.max(0, Number(countEl.innerText)-1) );
-
-        // añadir al carrito
-        card.querySelector('.add').addEventListener('click', ()=>{
-          const qty = Number(countEl.innerText);
-          if(qty>0){
-            // aquí podrías llamar a tu función addToCart(item, qty)
-            alert(`Añadido ${qty} x ${item.name}`);
-            countEl.innerText = 0;
-          }
-        });
-
-        area.appendChild(card);
-      });
-    } else {
-      area.innerHTML = '<p>No hay items disponibles.</p>';
-    }
-
   } catch(err){
     console.error(err);
-    area.innerHTML = '<p>Error al cargar el menú</p>';
+    document.getElementById('menuArea').innerHTML = '<p>Error al cargar el menú</p>';
   }
-})();
+}
+
+function renderMenu(menu) {
+  const area = document.getElementById('menuArea');
+  area.innerHTML = '';
+  menu.forEach(item=>{
+    const cardWrapper = document.createElement('div');
+    cardWrapper.className='card';
+
+    const inner = document.createElement('div');
+    inner.className='card-inner';
+    inner.innerHTML = `
+      <div class="imgwrap">
+        <img src="${item.image_url || 'https://via.placeholder.com/250x150?text=Sin+imagen'}" alt="${item.name}">
+      </div>
+      <div class="title">${item.name} - $${item.price.toFixed(2)}</div>
+      <div class="desc">${item.description||''}</div>
+      <div class="footer">
+        <div class="qty-controls">
+          <button class="dec">-</button>
+          <span class="count">0</span>
+          <button class="inc">+</button>
+        </div>
+        <button class="btn primary add">Añadir</button>
+      </div>
+    `;
+
+    // cantidad
+    const countEl = inner.querySelector('.count');
+    inner.querySelector('.inc').addEventListener('click',()=>countEl.innerText=Number(countEl.innerText)+1);
+    inner.querySelector('.dec').addEventListener('click',()=>countEl.innerText=Math.max(0,Number(countEl.innerText)-1));
+
+    // añadir al carrito
+    inner.querySelector('.add').addEventListener('click',()=>{
+      const qty = Number(countEl.innerText);
+      if(qty>0){
+        const existing = CART.items.find(i=>i.id===item.id);
+        if(existing) existing.qty += qty;
+        else CART.items.push({id:item.id, name:item.name, price:Number(item.price), qty});
+        updateCartUI();
+        countEl.innerText=0;
+      }
+    });
+
+    cardWrapper.appendChild(inner);
+    area.appendChild(cardWrapper);
+  });
+}
+
+function updateCartUI(){
+  const count = CART.items.reduce((s,i)=>s+i.qty,0);
+  document.getElementById('cartCount').innerText = count;
+  const total = CART.items.reduce((s,i)=>s+i.qty*i.price,0);
+  document.getElementById('cartTotal').innerText = total.toFixed(2);
+}
+
+function renderCartItems(){
+  const list = document.getElementById('cartItems');
+  list.innerHTML = '';
+  if(CART.items.length===0){ list.innerHTML='<p>No hay items.</p>'; return; }
+  CART.items.forEach(it=>{
+    const el = document.createElement('div');
+    el.style.display='flex'; el.style.justifyContent='space-between'; el.style.margin='8px 0';
+    el.innerHTML=`<div><b>${it.name}</b> x ${it.qty}</div><div>$${(it.qty*it.price).toFixed(2)}</div>`;
+    list.appendChild(el);
+  });
+  document.getElementById('cartTotal').innerText = CART.items.reduce((s,i)=>s+i.qty*i.price,0).toFixed(2);
+}
+
+function openCart(){ document.getElementById('cartModal').classList.add('show'); }
+function closeCart(){ document.getElementById('cartModal').classList.remove('show'); }
+
+document.getElementById('openCartBtn').addEventListener('click', openCart);
+document.getElementById('closeCartBtn').addEventListener('click', closeCart);
+
+document.getElementById('placeOrderBtn').addEventListener('click', async ()=>{
+  if(CART.items.length===0) return alert('Tu pedido está vacío');
+  const note = document.getElementById('note').value||'';
+  const payload = {fn:'placeOrder', mesa_id:CART.mesa||'0', items:CART.items, total:CART.items.reduce((s,i)=>s+i.qty*i.price,0), note};
+  try{
+    const res = await fetch(API_BASE,{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+    const data = await res.json();
+    if(data && data.success){ alert(`Pedido enviado! ID: ${data.order_id}`); CART.items=[]; updateCartUI(); closeCart(); }
+    else alert('Error al enviar pedido');
+  }catch(err){ console.error(err); alert('Error de conexión al enviar pedido'); }
+});
+
+updateMesaBadge();
+fetchMenu();
 </script>
 
-<!-- JS del menú -->
-<script src="assets/js/menu.js" defer></script>
 </body>
 </html>
-
