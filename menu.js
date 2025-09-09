@@ -79,9 +79,11 @@ function renderMenu(){
 
 function addToCart(item, qty){
   const existing = CART.items.find(i=>i.id===item.id);
-  if (existing) existing.qty += qty;
-  else CART.items.push({ id: item.id, name: item.name, price: Number(item.price), qty: qty });
+  if(existing) existing.qty += qty;
+  else CART.items.push({id:item.id,name:item.name,price:item.price,qty});
   updateCartUI();
+
+
 
   const badge = document.getElementById('cartCount');
   badge.classList.add('pulse');
@@ -148,7 +150,9 @@ async function placeOrderHandler(){
 }
 
 
+
 /* helper */
 function escapeHtml(text){ return String(text).replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];}); }
+
 
 
