@@ -1,15 +1,11 @@
 document.addEventListener('DOMContentLoaded', init);
 
-const API = window.API_BASE;
-
 let MENU = [];
-let CART = { items: [], mesa: null };
+let CART = { items: [], mesa: '0' };
 
 function init(){
-  const urlParams = new URLSearchParams(window.location.search);
-  CART.mesa = urlParams.get('mesa') || urlParams.get('table') || '0';
-  document.getElementById('mesaBadge').innerText = (CART.mesa && CART.mesa!=='0') ? `Mesa: ${CART.mesa}` : 'Mesa: --';
-  
+  CART.mesa = detectMesa();
+  document.getElementById('mesaBadge').innerText = `Mesa: ${CART.mesa}`;
   fetchMenu();
 
   document.getElementById('openCartBtn').addEventListener('click', openCart);
@@ -17,9 +13,20 @@ function init(){
   document.getElementById('placeOrderBtn').addEventListener('click', placeOrderHandler);
 }
 
+function detectMesa() {
+  const urlParams = new URLSearchParams(window.location.search);
+  let mesa = urlParams.get('mesa');
+  if (!mesa) {
+    const path = window.location.pathname.split('/').filter(Boolean);
+    const last = path[path.length-1];
+    if (/^\d+$/.test(last)) mesa = last;
+  }
+  return mesa || '0';
+}
+
 async function fetchMenu(){
   try{
-    const res = await fetch(`${API}?fn=getMenu`);
+    const res = await fetch(`${API_BASE}?fn=getMenu`);
     const data = await res.json();
     if (data && data.menu){
       MENU = data.menu;
@@ -27,7 +34,7 @@ async function fetchMenu(){
     } else {
       document.getElementById('menuArea').innerHTML = '<p>No hay items disponibles.</p>';
     }
-  }catch(err){
+  } catch(err){
     console.error(err);
     document.getElementById('menuArea').innerHTML = '<p>Error al cargar el menú.</p>';
   }
@@ -36,43 +43,20 @@ async function fetchMenu(){
 function renderMenu(){
   const area = document.getElementById('menuArea');
   area.innerHTML = '';
-  
-  MENU.forEach(item=>{
+  MENU.forEach(item => {
     const card = document.createElement('div');
-    card.className = 'card mdc-chip-set'; // agregamos clase de Google Chips
-    
+    card.className = 'card';
     card.innerHTML = `
-      <div class="imgwrap"><img loading="lazy" src="${item.image_url || 'https://via.placeholder.com/600x400?text=Sin+imagen'}" alt="${escapeHtml(item.name)}" /></div>
-      <div class="title">${escapeHtml(item.name)} <span style="float:right;font-weight:600">$${Number(item.price).toFixed(2)}</span></div>
-      <div class="desc">${escapeHtml(item.description||'')}</div>
+      <div class="imgwrap">
+        <img src="${item.image_url || 'https://via.placeholder.com/250x150'}" alt="${item.name}" />
+      </div>
+      <div class="title">${item.name} - $${item.price}</div>
+      <div class="desc">${item.description || ''}</div>
       <div class="footer">
-        <div class="qty-controls">
-          <button class="btn dec">-</button>
-          <div class="count">0</div>
-          <button class="btn inc">+</button>
-        </div>
-        <button class="btn primary add">Añadir</button>
+        <button class="btn add">Añadir</button>
       </div>
     `;
-
-    // inicializar Google Chips
-    new mdc.chips.MDCChipSet(card);
-
-    // events cantidad
-    card.querySelector('.inc').addEventListener('click', ()=>{
-      const c = card.querySelector('.count');
-      c.innerText = Number(c.innerText)+1;
-    });
-    card.querySelector('.dec').addEventListener('click', ()=>{
-      const c = card.querySelector('.count');
-      c.innerText = Math.max(0, Number(c.innerText)-1);
-    });
-    card.querySelector('.add').addEventListener('click', ()=>{
-      const qty = Number(card.querySelector('.count').innerText);
-      if (qty>0) addToCart(item, qty);
-      card.querySelector('.count').innerText = 0;
-    });
-
+    card.querySelector('.add').addEventListener('click', ()=> addToCart(item,1));
     area.appendChild(card);
   });
 }
@@ -80,14 +64,8 @@ function renderMenu(){
 function addToCart(item, qty){
   const existing = CART.items.find(i=>i.id===item.id);
   if(existing) existing.qty += qty;
-  else CART.items.push({id:item.id,name:item.name,price:item.price,qty});
+  else CART.items.push({id:item.id,name:item.name,price:Number(item.price),qty});
   updateCartUI();
-
-
-
-  const badge = document.getElementById('cartCount');
-  badge.classList.add('pulse');
-  setTimeout(()=>badge.classList.remove('pulse'),400);
 }
 
 function updateCartUI(){
@@ -98,61 +76,45 @@ function updateCartUI(){
 }
 
 function openCart(){
-  renderCartItems();
-  document.getElementById('cartModal').classList.remove('hidden');
-}
-function closeCart(){
-  document.getElementById('cartModal').classList.add('hidden');
-}
-
-function renderCartItems(){
   const list = document.getElementById('cartItems');
   list.innerHTML = '';
-  if (CART.items.length===0) { list.innerHTML = '<p>No hay items.</p>'; return; }
-  CART.items.forEach((it)=>{
+  if(CART.items.length===0){ list.innerHTML = '<p>No hay items.</p>'; }
+  else CART.items.forEach(it=>{
     const el = document.createElement('div');
-    el.className = 'cart-item';
-    el.style.display = 'flex'; el.style.justifyContent='space-between'; el.style.margin='8px 0';
-    el.innerHTML = `<div><b>${escapeHtml(it.name)}</b> x ${it.qty}</div><div>$${(it.qty*it.price).toFixed(2)}</div>`;
+    el.innerText = `${it.name} x ${it.qty} - $${(it.qty*it.price).toFixed(2)}`;
     list.appendChild(el);
   });
-  document.getElementById('cartTotal').innerText = CART.items.reduce((s,i)=>s+i.qty*i.price,0).toFixed(2);
+  document.getElementById('cartModal').classList.remove('hidden');
 }
 
+function closeCart(){ document.getElementById('cartModal').classList.add('hidden'); }
+
 async function placeOrderHandler(){
-  if (!CART.items.length) return alert('Tu pedido está vacío.');
+  if(!CART.items.length) return alert('Tu pedido está vacío.');
   const payload = {
-    fn: 'placeOrder',
-    mesa_id: CART.mesa,
-    items: CART.items,
-    total: CART.items.reduce((s,i)=>s+i.qty*i.price,0),
+    fn:'placeOrder',
+    mesa_id:CART.mesa,
+    items:CART.items,
+    total:CART.items.reduce((s,i)=>s+i.qty*i.price,0),
     note: document.getElementById('note').value || ''
   };
-  try {
-    const res = await fetch(API_BASE, {
+  try{
+    const res = await fetch(API_BASE,{
       method:'POST',
-      headers:{ 'Content-Type':'application/json' },
+      headers:{'Content-Type':'application/json'},
       body: JSON.stringify(payload)
     });
     const data = await res.json();
-    if (data.success){
-      alert('Pedido enviado! ID: ' + data.order_id);
+    if(data.success){
+      alert('Pedido enviado! ID: '+data.order_id);
       CART.items = [];
       updateCartUI();
       closeCart();
     } else {
-      alert('Error al enviar pedido: ' + (data.error||'desconocido'));
+      alert('Error al enviar pedido: '+(data.error||'desconocido'));
     }
-  } catch(err){
-    console.error('Error de conexión:', err);
+  }catch(err){
+    console.error('Error de conexión:',err);
     alert('Error de conexión al enviar pedido');
   }
 }
-
-
-
-/* helper */
-function escapeHtml(text){ return String(text).replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];}); }
-
-
-
