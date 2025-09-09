@@ -47,7 +47,30 @@
   const SITE_BASE = 'https://techmant.github.io/restaurant/';
 </script>
 
+
+
+  <script>
+(async function testAPI(){
+  try {
+    const res = await fetch('https://script.google.com/macros/s/AKfycbykvqW5j1KO5WP9VwJITtvjwWx_k1Iu60mtRcmHdqokRepM1mih22LFY9E1a4sO03zD/exec?fn=getMenu');
+    const data = await res.json();
+    console.log('Datos recibidos del menú:', data);
+    // prueba visual mínima
+    const area = document.getElementById('menuArea');
+    if(data && data.menu && data.menu.length){
+      area.innerHTML = data.menu.map(i=>`<div>${i.name} - $${i.price}</div>`).join('');
+    } else {
+      area.innerHTML = '<p>No hay items disponibles.</p>';
+    }
+  } catch(err){
+    console.error('Error al conectar con API:', err);
+    document.getElementById('menuArea').innerHTML = '<p>Error al conectar con API</p>';
+  }
+})();
+</script>
+
 <!-- JS del menú -->
 <script src="assets/js/menu.js" defer></script>
 </body>
 </html>
+
