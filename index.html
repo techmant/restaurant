@@ -3,11 +3,17 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Restaurante - Menú</title>
+<title>Menú - Restaurante</title>
+
+<!-- Estilos propios -->
 <link rel="stylesheet" href="assets/css/styles.css">
+
+<!-- Google Material Chips -->
+<link rel="stylesheet" href="https://unpkg.com/@material/chips/dist/mdc.chips.css">
+<script src="https://unpkg.com/@material/chips/dist/mdc.chips.min.js" defer></script>
+
 </head>
 <body>
-
 <header class="site-header">
   <div class="brand">Restaurante</div>
   <div class="header-right">
@@ -22,12 +28,13 @@
   </section>
 </main>
 
+<!-- Carrito modal -->
 <div id="cartModal" class="modal hidden">
   <div class="modal-content">
     <h3>Tu Pedido</h3>
     <div id="cartItems"></div>
     <div class="cart-footer">
-      <input id="note" placeholder="Observaciones (p.ej. sin cebolla)">
+      <input id="note" placeholder="Observaciones (p.ej. sin cebolla)" />
       <div class="total">Total: $<span id="cartTotal">0.00</span></div>
       <button id="placeOrderBtn" class="btn primary">Hacer pedido</button>
       <button id="closeCartBtn" class="btn">Cerrar</button>
@@ -36,8 +43,102 @@
 </div>
 
 <script>
-  const API_BASE = 'https://script.google.com/macros/s/AKfycbykvqW5j1KO5WP9VwJITtvjwWx_k1Iu60mtRcmHdqokRepM1mih22LFY9E1a4sO03zD/exec';
+  const API_BASE = 'https://script.google.com/macros/s/AKfycbykvqW5j1KO5WP9VwJITtvjwWx_k1Iu60mtRcmHdqokRepM1mih22LFY9E1a4sO03zD/exec'; 
+  const SITE_BASE = 'https://techmant.github.io/restaurant/';
 </script>
+
+
+
+  <script>
+(async function testAPI(){
+  try {
+    const res = await fetch('https://script.google.com/macros/s/AKfycbykvqW5j1KO5WP9VwJITtvjwWx_k1Iu60mtRcmHdqokRepM1mih22LFY9E1a4sO03zD/exec?fn=getMenu');
+    const data = await res.json();
+    console.log('Datos recibidos del menú:', data);
+    // prueba visual mínima
+    const area = document.getElementById('menuArea');
+    if(data && data.menu && data.menu.length){
+      area.innerHTML = data.menu.map(i=>`<div>${i.name} - $${i.price}</div>`).join('');
+    } else {
+      area.innerHTML = '<p>No hay items disponibles.</p>';
+    }
+  } catch(err){
+    console.error('Error al conectar con API:', err);
+    document.getElementById('menuArea').innerHTML = '<p>Error al conectar con API</p>';
+  }
+})();
+</script>
+
+  <section id="menuArea" class="menu-area">
+  <!-- Menú cargado por JS -->
+</section>
+
+<script>
+(async function renderFullMenu(){
+  const area = document.getElementById('menuArea');
+  try {
+    const res = await fetch('https://script.google.com/macros/s/AKfycbykvqW5j1KO5WP9VwJITtvjwWx_k1Iu60mtRcmHdqokRepM1mih22LFY9E1a4sO03zD/exec?fn=getMenu');
+    const data = await res.json();
+
+    if(data && data.menu && data.menu.length){
+      area.innerHTML = '';
+      data.menu.forEach(item=>{
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.style.border = '1px solid #ccc';
+        card.style.margin = '10px';
+        card.style.padding = '10px';
+        card.style.width = '250px';
+        card.style.display = 'inline-block';
+        card.style.verticalAlign = 'top';
+        card.innerHTML = `
+          <div class="imgwrap">
+            <img src="${item.image_url || 'https://via.placeholder.com/250x150?text=Sin+imagen'}" 
+                 alt="${item.name}" 
+                 style="width:100%; height:auto; display:block; margin-bottom:8px;">
+          </div>
+          <div class="title" style="font-weight:bold; margin-bottom:4px;">${item.name} - $${item.price}</div>
+          <div class="desc" style="margin-bottom:8px;">${item.description || ''}</div>
+          <div class="footer">
+            <div class="qty-controls" style="margin-bottom:4px;">
+              <button class="btn dec">-</button>
+              <span class="count">0</span>
+              <button class="btn inc">+</button>
+            </div>
+            <button class="btn primary add">Añadir</button>
+          </div>
+        `;
+
+        // cantidad
+        const countEl = card.querySelector('.count');
+        card.querySelector('.inc').addEventListener('click', ()=> countEl.innerText = Number(countEl.innerText)+1 );
+        card.querySelector('.dec').addEventListener('click', ()=> countEl.innerText = Math.max(0, Number(countEl.innerText)-1) );
+
+        // añadir al carrito
+        card.querySelector('.add').addEventListener('click', ()=>{
+          const qty = Number(countEl.innerText);
+          if(qty>0){
+            // aquí podrías llamar a tu función addToCart(item, qty)
+            alert(`Añadido ${qty} x ${item.name}`);
+            countEl.innerText = 0;
+          }
+        });
+
+        area.appendChild(card);
+      });
+    } else {
+      area.innerHTML = '<p>No hay items disponibles.</p>';
+    }
+
+  } catch(err){
+    console.error(err);
+    area.innerHTML = '<p>Error al cargar el menú</p>';
+  }
+})();
+</script>
+
+<!-- JS del menú -->
 <script src="assets/js/menu.js" defer></script>
 </body>
 </html>
+
