@@ -52,14 +52,16 @@ body{background:#f2f2f2;font-family:sans-serif;margin:0;padding:0;}
 const API_BASE='https://script.google.com/macros/s/AKfycbykvqW5j1KO5WP9VwJITtvjwWx_k1Iu60mtRcmHdqokRepM1mih22LFY9E1a4sO03zD/exec'; // reemplaza con tu URL Web App
 let CART={items:[],mesa:'0'};
 
+
 function getMesaFromURL(){
-  const url=window.location.href;
-  const match=url.match(/mesa=([0-9]+)/);
-  if(match) return match[1];
-  const pathSegments=new URL(url).pathname.split('/').filter(Boolean);
-  const last=pathSegments[pathSegments.length-1];
-  return /^\d+$/.test(last)?last:'0';
+  const path = window.location.pathname.split('/').filter(Boolean);
+  const last = path[path.length-1];
+  return /^\d+$/.test(last) ? last : '0';
 }
+CART.mesa = getMesaFromURL();
+document.getElementById('mesaBadge').innerText = `Mesa: ${CART.mesa}`;
+
+
 
 function updateMesaBadge(){
   CART.mesa=getMesaFromURL();
@@ -145,6 +147,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('placeOrderBtn').addEventListener('click',placeOrderHandler);
 });
 </script>
+<script src="menu.js" defer></script>
 
 </body>
 </html>
+
