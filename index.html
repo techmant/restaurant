@@ -4,13 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Restaurante - Menú</title>
-
-<!-- Estilos propios -->
 <link rel="stylesheet" href="assets/css/styles.css">
-
-<!-- Google Material Chips (opcional) -->
-<link rel="stylesheet" href="https://unpkg.com/@material/chips/dist/mdc.chips.css">
-<script src="https://unpkg.com/@material/chips/dist/mdc.chips.min.js" defer></script>
 </head>
 <body>
 
@@ -28,13 +22,12 @@
   </section>
 </main>
 
-<!-- Carrito modal -->
 <div id="cartModal" class="modal hidden">
   <div class="modal-content">
     <h3>Tu Pedido</h3>
     <div id="cartItems"></div>
     <div class="cart-footer">
-      <input id="note" placeholder="Observaciones (p.ej. sin cebolla)" />
+      <input id="note" placeholder="Observaciones (p.ej. sin cebolla)">
       <div class="total">Total: $<span id="cartTotal">0.00</span></div>
       <button id="placeOrderBtn" class="btn primary">Hacer pedido</button>
       <button id="closeCartBtn" class="btn">Cerrar</button>
@@ -43,11 +36,8 @@
 </div>
 
 <script>
-  // URL de tu Web App de Google Sheets
   const API_BASE = 'https://script.google.com/macros/s/AKfycbykvqW5j1KO5WP9VwJITtvjwWx_k1Iu60mtRcmHdqokRepM1mih22LFY9E1a4sO03zD/exec';
 </script>
-
-<!-- JS del menú y carrito -->
 <script src="assets/js/menu.js" defer></script>
 </body>
 </html>
