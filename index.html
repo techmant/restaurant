@@ -53,12 +53,18 @@ const API_BASE='https://script.google.com/macros/s/AKfycbykvqW5j1KO5WP9VwJITtvjw
 let CART={items:[],mesa:'0'};
 
 
-function getMesaFromURL(){
-  const path = window.location.pathname.split('/').filter(Boolean);
-  const last = path[path.length-1];
-  return /^\d+$/.test(last) ? last : '0';
+function detectMesa() {
+  const urlParams = new URLSearchParams(window.location.search);
+  let mesa = urlParams.get('mesa');
+  if (!mesa) {
+    const path = window.location.pathname.split('/').filter(Boolean);
+    const last = path[path.length-1];
+    if (/^\d+$/.test(last)) mesa = last;
+  }
+  return mesa || '0';
 }
-CART.mesa = getMesaFromURL();
+
+CART.mesa = detectMesa();
 document.getElementById('mesaBadge').innerText = `Mesa: ${CART.mesa}`;
 
 
@@ -151,4 +157,5 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 </body>
 </html>
+
 
