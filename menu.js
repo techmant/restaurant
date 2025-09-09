@@ -1,17 +1,17 @@
-// menu.js - carga menú y maneja carrito
 document.addEventListener('DOMContentLoaded', init);
 
-const API = window.API_BASE; // definido en index.html
+const API = window.API_BASE;
 
 let MENU = [];
 let CART = { items: [], mesa: null };
 
 function init(){
   const urlParams = new URLSearchParams(window.location.search);
-  const mesa = urlParams.get('mesa') || urlParams.get('table') || '0';
-  CART.mesa = mesa;
-  document.getElementById('mesaBadge').innerText = (mesa && mesa!=='0') ? `Mesa: ${mesa}` : 'Mesa: --';
+  CART.mesa = urlParams.get('mesa') || urlParams.get('table') || '0';
+  document.getElementById('mesaBadge').innerText = (CART.mesa && CART.mesa!=='0') ? `Mesa: ${CART.mesa}` : 'Mesa: --';
+  
   fetchMenu();
+
   document.getElementById('openCartBtn').addEventListener('click', openCart);
   document.getElementById('closeCartBtn').addEventListener('click', closeCart);
   document.getElementById('placeOrderBtn').addEventListener('click', placeOrderHandler);
@@ -36,9 +36,11 @@ async function fetchMenu(){
 function renderMenu(){
   const area = document.getElementById('menuArea');
   area.innerHTML = '';
+  
   MENU.forEach(item=>{
     const card = document.createElement('div');
-    card.className = 'card';
+    card.className = 'card mdc-chip-set'; // agregamos clase de Google Chips
+    
     card.innerHTML = `
       <div class="imgwrap"><img loading="lazy" src="${item.image_url || 'https://via.placeholder.com/600x400?text=Sin+imagen'}" alt="${escapeHtml(item.name)}" /></div>
       <div class="title">${escapeHtml(item.name)} <span style="float:right;font-weight:600">$${Number(item.price).toFixed(2)}</span></div>
@@ -52,7 +54,11 @@ function renderMenu(){
         <button class="btn primary add">Añadir</button>
       </div>
     `;
-    // events
+
+    // inicializar Google Chips
+    new mdc.chips.MDCChipSet(card);
+
+    // events cantidad
     card.querySelector('.inc').addEventListener('click', ()=>{
       const c = card.querySelector('.count');
       c.innerText = Number(c.innerText)+1;
@@ -66,6 +72,7 @@ function renderMenu(){
       if (qty>0) addToCart(item, qty);
       card.querySelector('.count').innerText = 0;
     });
+
     area.appendChild(card);
   });
 }
@@ -75,7 +82,7 @@ function addToCart(item, qty){
   if (existing) existing.qty += qty;
   else CART.items.push({ id: item.id, name: item.name, price: Number(item.price), qty: qty });
   updateCartUI();
-  // small animation: briefly highlight badge
+
   const badge = document.getElementById('cartCount');
   badge.classList.add('pulse');
   setTimeout(()=>badge.classList.remove('pulse'),400);
@@ -100,7 +107,7 @@ function renderCartItems(){
   const list = document.getElementById('cartItems');
   list.innerHTML = '';
   if (CART.items.length===0) { list.innerHTML = '<p>No hay items.</p>'; return; }
-  CART.items.forEach((it, idx)=>{
+  CART.items.forEach((it)=>{
     const el = document.createElement('div');
     el.className = 'cart-item';
     el.style.display = 'flex'; el.style.justifyContent='space-between'; el.style.margin='8px 0';
@@ -141,5 +148,5 @@ async function placeOrderHandler(){
   }
 }
 
-/* small helper */
+/* helper */
 function escapeHtml(text){ return String(text).replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];}); }
