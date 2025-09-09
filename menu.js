@@ -118,14 +118,13 @@ function renderCartItems(){
 }
 
 async function placeOrderHandler(){
-  if(CART.items.length===0) return alert('Tu pedido está vacío');
-  const note = document.getElementById('note').value || '';
+  if (!CART.items.length) return alert('Tu pedido está vacío.');
   const payload = {
     fn: 'placeOrder',
-    mesa_id: CART.mesa || '0',
+    mesa_id: CART.mesa,
     items: CART.items,
     total: CART.items.reduce((s,i)=>s+i.qty*i.price,0),
-    note
+    note: document.getElementById('note').value || ''
   };
   try {
     const res = await fetch(API_BASE, {
@@ -134,21 +133,22 @@ async function placeOrderHandler(){
       body: JSON.stringify(payload)
     });
     const data = await res.json();
-    if(data && data.success){
-      alert(`Pedido enviado correctamente! ID: ${data.order_id}`);
+    if (data.success){
+      alert('Pedido enviado! ID: ' + data.order_id);
       CART.items = [];
       updateCartUI();
       closeCart();
     } else {
-      console.error(data);
       alert('Error al enviar pedido: ' + (data.error||'desconocido'));
     }
   } catch(err){
-    console.error(err);
+    console.error('Error de conexión:', err);
     alert('Error de conexión al enviar pedido');
   }
 }
 
+
 /* helper */
 function escapeHtml(text){ return String(text).replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];}); }
+
 
