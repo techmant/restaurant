@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Panel Cocinero - Restaurante</title>
+<link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+<header class="site-header cook-header">
+  <div class="brand">Panel Cocinero</div>
+  <div>
+    <input id="tokenInput" placeholder="Token del cocinero" />
+    <button id="unlockBtn" class="btn small">Abrir</button>
+    <button id="muteBtn" class="btn small">Silenciar</button>
+  </div>
+</header>
+
+<main class="container cook-container">
+  <div id="ordersList" class="orders-list">Introduce token y presiona Abrir...</div>
+</main>
+
+<script>
+  const API_BASE = 'https://script.google.com/macros/s/AKfycbxzzNuPYfQBIy5q7EN9FSfnGATY-upA8-MpF41WilZL3KV7cvlwEN4fQwFtZb2PteGL/exec'; // Reemplaza con la URL desplegada
+  const COOK_TOKEN = '123'; // Reemplaza (y mantén secreto)
+</script>
+<script src="assets/js/cook.js"></script>
+</body>
+</html>
