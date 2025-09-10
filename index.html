@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Panel Cocinero - Ejemplo Básico</title>
+<title>Panel Cocinero - Pedidos Pendientes</title>
 <style>
-body{font-family:sans-serif;margin:0;padding:0;background:#f5f5f5;}
-header{background:#333;color:white;padding:10px;display:flex;justify-content:space-between;align-items:center;}
-header input{padding:5px;}
-header button{padding:5px 10px;cursor:pointer;background:#4CAF50;color:white;border:none;border-radius:3px;}
-#ordersList{padding:20px;}
-.order-card{background:white;padding:15px;margin-bottom:10px;border-radius:5px;box-shadow:0 2px 5px rgba(0,0,0,0.1);}
-.order-card button{background:#2196F3;color:white;border:none;padding:5px 10px;margin-top:10px;cursor:pointer;border-radius:3px;}
+body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+header { background: #333; color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
+header input { padding: 5px; margin-right: 5px; }
+header button { padding: 5px 10px; background: #4CAF50; color: white; border: none; border-radius: 3px; cursor: pointer; }
+#ordersList { padding: 20px; }
+.order-card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+.order-card button { background: #2196F3; color: white; border: none; padding: 5px 10px; margin-top: 10px; cursor: pointer; border-radius: 3px; }
 </style>
 </head>
 <body>
@@ -27,13 +27,13 @@ header button{padding:5px 10px;cursor:pointer;background:#4CAF50;color:white;bor
 <div id="ordersList">Introduce token y presiona Abrir...</div>
 
 <script>
-// Cambia esto por la URL de tu Web App publicada
-const API_BASE = 'https://script.google.com/macros/s/AKfycbwRjyKTpEIAA78HGhZcFXx5oVrhQQZtd39fj1FRE5c-0s80zDt0ABZpDUMNetUtMq9J/exec';
+// URL de tu Web App de Google Apps Script
+const API_BASE = 'https://script.google.com/macros/s/AKfycbwRjyKTpEIAA78HGhZcFXx5oVrhQQZtd39fj1FRE5c-0s80zDt0ABZpDUMNetUtMq9J/exec'; // <--- Reemplaza por tu URL
 const COOK_TOKEN = 'cocina';
 let intervalID;
 
-// Función para desbloquear cocinero
-document.getElementById('unlockBtn').addEventListener('click',()=>{
+// Función para desbloquear panel
+document.getElementById('unlockBtn').addEventListener('click', () => {
     const token = document.getElementById('tokenInput').value.trim();
     if(token !== COOK_TOKEN){ alert('Token incorrecto'); return; }
     loadOrders();
@@ -41,7 +41,7 @@ document.getElementById('unlockBtn').addEventListener('click',()=>{
     intervalID = setInterval(loadOrders, 5000);
 });
 
-// Función para cargar pedidos pendientes
+// Cargar pedidos pendientes
 async function loadOrders(){
     try{
         const res = await fetch(`${API_BASE}?fn=getOrders`);
@@ -54,24 +54,23 @@ async function loadOrders(){
             return;
         }
 
-        // Filtrar solo pendientes
         const pendientes = data.orders.filter(o => o.status === 'PENDIENTE');
         if(pendientes.length === 0){
             container.innerHTML = 'No hay pedidos pendientes';
             return;
         }
 
-        pendientes.forEach(order=>{
+        pendientes.forEach(order => {
             let items = [];
-            try{ items = JSON.parse(order.items_json || '[]'); } catch(e){ items=[]; }
+            try { items = JSON.parse(order.items_json || '[]'); } catch(e){ items = []; }
 
             const div = document.createElement('div');
             div.className = 'order-card';
             div.innerHTML = `<strong>Mesa ${order.mesa_id}</strong><br>
-                             ${items.map(i=>`${i.name} x${i.qty}`).join(', ')}<br>
+                             ${items.map(i => `${i.name} x${i.qty}`).join(', ')}<br>
                              Nota: ${order.note||''}<br>
                              <button data-id="${order.order_id}">Terminar</button>`;
-            div.querySelector('button').addEventListener('click',()=>markDone(order.order_id));
+            div.querySelector('button').addEventListener('click', () => markDone(order.order_id));
             container.appendChild(div);
         });
 
@@ -81,13 +80,13 @@ async function loadOrders(){
     }
 }
 
-// Función para marcar pedido como TERMINADO
+// Marcar pedido como TERMINADO
 async function markDone(order_id){
     try{
         const res = await fetch(API_BASE, {
-            method:'POST',
-            headers:{'Content-Type':'text/plain'},
-            body: JSON.stringify({fn:'updateOrderStatus', order_id, status:'TERMINADO'})
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ fn: 'updateOrderStatus', order_id: order_id, status: 'TERMINADO' })
         });
         const data = await res.json();
         if(data.success){ loadOrders(); } 
