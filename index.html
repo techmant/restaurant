@@ -157,16 +157,34 @@ async function loadOrders(){
     const res=await fetch(`${API_BASE}?fn=getOrders`);
     const data=await res.json();
     const cont=document.getElementById('ordersList'); cont.innerHTML='';
+
     if(data.orders && data.orders.length){
       data.orders.forEach(o=>{
         const div=document.createElement('div');
-        const items=(o.items||[]).map(i=>`${i.name} x${i.qty}`).join(', ');
-        div.innerHTML=`<strong>Mesa ${o.mesa_id}</strong>: ${items}<br>Nota: ${o.note||''}`;
+        const items=(o.items||[]).map(i=>`${i.qty}x ${i.name}`).join(', ');
+        div.innerHTML=`
+          <strong>Mesa ${o.mesa_id}</strong> - Total: $${o.total}<br>
+          ${items}<br>
+          Nota: ${o.note||''}<br>
+          <button onclick='viewOrder("${o.order_id}")'>Ver Pedido</button>
+        `;
         cont.appendChild(div);
       });
-    } else cont.innerHTML='No hay pedidos';
-  }catch(err){ console.error(err); document.getElementById('ordersList').innerHTML='Error al cargar pedidos';}
+    } else cont.innerHTML='No hay pedidos pendientes';
+  }catch(err){
+    console.error(err);
+    document.getElementById('ordersList').innerHTML='Error al cargar pedidos';
+  }
 }
+
+function viewOrder(orderId){
+  const order = [...document.querySelectorAll('#ordersList div')]
+    .find(d => d.innerHTML.includes(orderId));
+  if(!order) return;
+
+  alert("Detalle del pedido " + orderId + ":\n" + order.innerText);
+}
+
 
 // === Inicializar ===
 if(VIEW==='client'){ updateMesaBadge(); fetchMenu(); }
