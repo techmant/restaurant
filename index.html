@@ -27,7 +27,7 @@
 <div id="ordersList">Introduce token y presiona Abrir...</div>
 
 <script>
-  // ⚠️ REEMPLAZA ESTA URL CON LA DE TU WEB APP PUBLICADA (SIN ESPACIOS)
+  // ✅ URL CORRECTA (sin espacios)
   const API_BASE = 'https://script.google.com/macros/s/AKfycbxmYEDvT6huFpyjbEFV2NgzEj_X4oGWyowsiFttYDo/dev';
   const COOK_TOKEN = 'cocina';
   let intervalID;
@@ -45,8 +45,17 @@
 
   async function loadOrders() {
     try {
-      const res = await fetch(`${API_BASE}?fn=getOrders`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+      console.log("Llamando a:", `${API_BASE}?fn=getOrders`);
+      
+      const res = await fetch(`${API_BASE}?fn=getOrders`, {
+        mode: 'cors',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+      }
+      
       const data = await res.json();
       const container = document.getElementById('ordersList');
       container.innerHTML = '';
@@ -71,8 +80,8 @@
       });
 
     } catch(err) {
-      console.error(err);
-      document.getElementById('ordersList').innerHTML = `<div style="color:red; padding:20px;">Error al cargar pedidos: ${err.message}</div>`;
+      console.error("Error:", err);
+      document.getElementById('ordersList').innerHTML = `<div style="color:red; padding:20px;">Error: ${err.message}</div>`;
     }
   }
 
@@ -87,11 +96,11 @@
       if(data.success) {
         loadOrders();
       } else {
-        alert('Error al actualizar pedido: ' + (data.error || 'Desconocido'));
+        alert('Error: ' + data.error);
       }
     } catch(err) {
       console.error(err);
-      alert('Error de conexión: ' + err.message);
+      alert('Error de conexión');
     }
   }
 </script>
